@@ -227,11 +227,28 @@ SYSTEM_PROMPT = ("You are a senior travel planner. Reply with ONE valid JSON obj
                  "no commentary. Use realistic, real places and prices.")
 
 
+import time
+
+def _post(url, **kw):
+    """POST with automatic retry on temporary server errors."""
+    for i in range(3):
+        try:
+            r = requests.post(url, **kw)
+        except requests.RequestException:
+            if i == 2:
+                raise
+            time.sleep(2 * (i + 1))
+            continue
+        if r.status_code not in (429, 500, 502, 503, 504):
+            return r
+        time.sleep(2 * (i + 1))
+    return r
+
 def call_llm(provider: str, key: str, model: str, prompt: str, temperature: float = 0.7) -> dict:
     """Calls Gemini or Groq over REST. API key is sent in headers only (never logged or put in URLs)."""
     try:
         if provider == "Gemini":
-            r = requests.post(
+            r = _post(
                 f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
                 headers={"x-goog-api-key": key, "Content-Type": "application/json"},
                 json={"systemInstruction": {"parts": [{"text": SYSTEM_PROMPT}]},
@@ -241,7 +258,7 @@ def call_llm(provider: str, key: str, model: str, prompt: str, temperature: floa
             r.raise_for_status()
             text = r.json()["candidates"][0]["content"]["parts"][0]["text"]
         else:
-            r = requests.post(
+            r = _post(
                 "https://api.groq.com/openai/v1/chat/completions",
                 headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
                 json={"model": model, "temperature": temperature, "response_format": {"type": "json_object"},

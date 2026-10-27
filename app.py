@@ -271,7 +271,12 @@ def call_llm(provider: str, key: str, model: str, prompt: str, temperature: floa
         code = e.response.status_code if e.response is not None else "?"
         hint = {400: "bad request / invalid model name", 401: "invalid API key", 403: "key not permitted",
                 429: "rate limit hit, retry shortly"}.get(code, "provider error")
-        raise RuntimeError(f"{provider} API error {code}: {hint}") from None
+                try:
+            detail = e.response.json().get("error", {})
+            detail = detail.get("message", "") if isinstance(detail, dict) else str(detail)
+        except Exception:
+            detail = ""
+        raise RuntimeError(f"{provider} API error {code}: {hint}. {detail}") from None
     except requests.RequestException:
         raise RuntimeError(f"Network error while contacting {provider}.") from None
     except (KeyError, IndexError, ValueError):
@@ -283,8 +288,10 @@ def llm_ready() -> bool:
 
 
 def ask_llm(prompt: str, temperature: float = 0.7) -> dict:
-    model = st.session_state.model or (GEMINI_MODEL_DEFAULT if st.session_state.provider == "Gemini" else GROQ_MODEL_DEFAULT)
-    return call_llm(st.session_state.provider, st.session_state.api_key, model, prompt, temperature)
+    default = GEMINI_MODEL_DEFAULT if st.session_state.provider == "Gemini" else GROQ_MODEL_DEFAULT
+    model = (st.session_state.model or "").strip().strip("\"'") or default
+    key = st.session_state.api_key.strip().strip("\"'")
+    return call_llm(st.session_state.provider, key, model, prompt, temperature)
 
 
 # ───────────────────────── 5. RECOMMENDER (Tab 1) ─────────────────────────

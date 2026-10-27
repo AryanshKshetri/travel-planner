@@ -32,7 +32,7 @@ BUDGET_PER_DAY_USD = {"Budget": 70, "Moderate": 160, "Luxury": 400}  # per perso
 BUDGET_MULT = {"Budget": 0.6, "Moderate": 1.0, "Luxury": 2.2}
 VIBES = ["Beach", "Mountains", "Cultural", "Urban"]
 INTERESTS = ["Food", "Adventure", "History", "Nightlife"]
-GEMINI_MODEL_DEFAULT = "gemini-3.8-flash"
+GEMINI_MODEL_DEFAULT = "gemini-flash-lite-latest"
 GROQ_MODEL_DEFAULT = "llama-3.3-70b-versatile"
 CHECKLIST = [
     "Passport / ID + 2 photocopies (keep separate)", "Visa / e-visa / entry permits",

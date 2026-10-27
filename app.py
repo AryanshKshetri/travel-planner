@@ -271,7 +271,7 @@ def call_llm(provider: str, key: str, model: str, prompt: str, temperature: floa
         code = e.response.status_code if e.response is not None else "?"
         hint = {400: "bad request / invalid model name", 401: "invalid API key", 403: "key not permitted",
                 429: "rate limit hit, retry shortly"}.get(code, "provider error")
-                try:
+        try:
             detail = e.response.json().get("error", {})
             detail = detail.get("message", "") if isinstance(detail, dict) else str(detail)
         except Exception:
